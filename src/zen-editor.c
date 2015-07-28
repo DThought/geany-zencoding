@@ -341,18 +341,24 @@ ZenEditor_replace_content(ZenEditor *self, PyObject *args)
 		{
 			/* replace whole editor content */
 			sci_set_text(sci, tmp2);
+
+			/* Move cursor to first placeholder position, if found */
+			if (ph_pos > -1)
+				sci_set_current_position(sci, sel_start + ph_pos, TRUE);
 		}
-		else if (sel_start != -1 && sel_end == -1)
-		{
-			/* insert text at sel_start */
-			sci_insert_text(sci, sel_start, tmp2);
-		}
-		else if (sel_start != -1 && sel_end != -1)
+		else if (sel_start != -1)
 		{
 			/* replace from sel_start to sel_end */
+			if (sel_end == -1)
+			{
+				/* insert text at sel_start */
+				sel_end = sel_start;
+			}
+
 			sci_set_selection_start(sci, sel_start);
 			sci_set_selection_end(sci, sel_end);
-			sci_replace_sel(sci, tmp2);
+			sci_replace_sel(sci, "");
+			editor_insert_text_block(ZenEditor_get_context(self)->editor, tmp2, sel_start, ph_pos, -1, FALSE);
 		}
 		else
 		{
@@ -362,11 +368,6 @@ ZenEditor_replace_content(ZenEditor *self, PyObject *args)
 		}
 
 		g_free(tmp2);
-
-		/* Move cursor to first placeholder position, if found */
-		if (ph_pos > -1)
-			sci_set_current_position(sci, sel_start + ph_pos, TRUE);
-
 	}
 	else
 	{
